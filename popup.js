@@ -250,8 +250,8 @@ function runDebugImagesContentScript() {
   var parser = root.parser;
 
   // 1. Find candidates
-  var contentRoot = parser.findSourceCandidateRoot(document.body);
-  var candidates = parser.collectSourcePanelCandidates(contentRoot);
+  // Search entire body for source panels
+  var candidates = parser.collectSourcePanelCandidates(document.body);
 
   var report = [];
 
