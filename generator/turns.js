@@ -21,7 +21,7 @@
 
   function formatTurnNumber(value) {
     var safeValue = Number.isFinite(value) ? value : 0;
-    return String(Math.max(0, safeValue)).padStart(2, '0');
+    return String(Math.max(0, safeValue));
   }
 
   function buildNavArrow(direction, turnIndex, isDisabled) {
@@ -49,7 +49,7 @@
     html += `<div class="turn-row${hasSidePanel ? ' has-side' : ''}">\n`;
     html += `  <div class="turn" id="turn-${num}">\n`;
     html += `    <div class="turn-header">\n`;
-    html += `      <span class="turn-counter">${prevArrow}<span class="turn-number">${formattedCurrent}~${formattedTotal}</span>${nextArrow}</span>\n`;
+    html += `      <span class="turn-counter">${prevArrow}<span class="turn-number">${formattedCurrent} ~ ${formattedTotal}</span>${nextArrow}</span>\n`;
     html += `    </div>\n`;
     html += `    <div class="user-block">\n`;
     html += quoteBlock;

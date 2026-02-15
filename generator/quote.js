@@ -189,7 +189,6 @@
 
     if (quoteParts.textHtml) {
       html += `    <div class="user-quote user-quote-text">\n`;
-      html += `      <div class="user-quote-mark">&ldquo;</div>\n`;
       html += `      <div class="user-quote-body">${quoteParts.textHtml}</div>\n`;
       html += `    </div>\n`;
     }
