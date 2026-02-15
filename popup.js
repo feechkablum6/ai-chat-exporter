@@ -187,3 +187,89 @@ document.getElementById('saveHtml').addEventListener('click', () => {
 document.getElementById('savePhp').addEventListener('click', () => {
   saveChat('php');
 });
+
+// DEBUG MODE START
+document.getElementById('debugBtn').addEventListener('click', async () => {
+  try {
+    setStatus('Сбор данных...');
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) return;
+
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: function() {
+        // Helper to find the best container
+        function findBestContainer() {
+          try {
+            // 1. Try standard AI container selector (prioritize the one with actual content)
+            const aiContainers = Array.from(document.querySelectorAll('[data-subtree="aimc"], [data-aimmrs="true"]'));
+            if (aiContainers.length > 0) {
+               // Return the last one that has reasonable size
+               return aiContainers[aiContainers.length - 1];
+            }
+
+            // 2. Try the turn containers known to parser
+            const turnSelector = 'div.tonYlb, div[data-tr-rsts], [jsmodel*="CPTaDd"][data-tr-rsts]';
+            const turns = Array.from(document.querySelectorAll(turnSelector));
+            if (turns.length > 0) {
+              return turns[turns.length - 1];
+            }
+
+            // 3. Fallback: try to find heading-like elements often used in Google Cards
+            const specificHeadings = Array.from(document.querySelectorAll('div[role="heading"], h3'));
+            const likelyCardHeading = specificHeadings.find(h =>
+              (h.innerText && (h.innerText.includes('Central Park') || h.innerText.includes('Town Lake')))
+            );
+
+            if (likelyCardHeading) {
+               // Traverse up to find a container
+               let p = likelyCardHeading.parentElement;
+               while (p && p !== document.body) {
+                 if (p.classList.contains('tonYlb') || p.getAttribute('data-subtree') === 'aimc') {
+                   return p;
+                 }
+                 // If it looks like a card list container
+                 if (p.children.length > 1 && p.innerText.length > 200) {
+                    return p;
+                 }
+                 p = p.parentElement;
+               }
+               return likelyCardHeading.parentElement;
+            }
+
+            // 4. Last resort: Return main content area
+            const main = document.querySelector('main') || document.querySelector('[role="main"]');
+            if (main) return main;
+
+            return document.body;
+          } catch (e) {
+            return document.body;
+          }
+        }
+
+        const container = findBestContainer();
+        if (!container) return 'ERROR: Container not found';
+
+        // Return outerHTML
+        return container.outerHTML;
+      }
+    });
+
+    if (!results || !results[0] || !results[0].result) {
+      setStatus('Ошибка: Данные не найдены', 'error');
+      return;
+    }
+
+    const html = results[0].result;
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(html);
+    setStatus('HTML скопирован в буфер!', 'success');
+
+  } catch (err) {
+    console.error(err);
+    setStatus('Ошибка: ' + err.message, 'error');
+  }
+});
+// DEBUG MODE END
