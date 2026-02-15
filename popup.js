@@ -335,10 +335,24 @@ function runDebugImagesContentScript() {
   closeBtn.onclick = function() { document.body.removeChild(div); };
 
   var info = document.createElement('div');
-  info.textContent = 'Copy this JSON and send it to developer.';
   info.style.color = '#fff';
   info.style.marginBottom = '10px';
   info.style.fontSize = '18px';
+  info.style.fontWeight = 'bold';
+  info.textContent = 'Копирование...';
+
+  // Try copy
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(function() {
+      info.textContent = 'Отчет скопирован в буфер! Отправьте его разработчику.';
+      info.style.color = '#81c784';
+    }).catch(function(err) {
+      info.textContent = 'Не удалось скопировать автоматически. Скопируйте текст ниже вручную.';
+      info.style.color = '#e57373';
+    });
+  } else {
+    info.textContent = 'Скопируйте текст ниже вручную и отправьте разработчику.';
+  }
 
   div.appendChild(info);
   div.appendChild(textarea);
