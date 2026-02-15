@@ -146,10 +146,20 @@
       pool.forEach(function(item) {
         var area = Number(item.area || 0);
         var len = Number(item.srcLen || 0);
+        var score = 0;
 
-        // In clones, natural sizes are often 0; src length is a decent proxy.
-        // Prefer big images (area), then longer src (often real preview vs. tiny icons).
-        var score = area * 10 + len;
+        if (area > 0) {
+          // If we have dimensions, prefer big images.
+          score = area * 10 + len;
+        } else {
+          // If area is 0 (lazy load or display:none), rely on src length.
+          // Long URLs usually mean content images (not simple icons).
+          if (len > 60 && item.srcLower.indexOf('data:') !== 0) {
+            score = 5000 + len;
+          } else {
+            score = len;
+          }
+        }
 
         if (score > bestScore) {
           bestScore = score;

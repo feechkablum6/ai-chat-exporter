@@ -271,17 +271,30 @@
         }
 
         .ai-answer ul, .ai-answer ol {
-            padding-left: 24px;
-            margin-bottom: 12px;
+            padding-left: 26px;
+            margin-bottom: 24px;
         }
 
         .ai-answer li {
-            margin-bottom: 6px;
+            margin-bottom: 24px;
+            padding-left: 4px;
+        }
+
+        .ai-answer li:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-answer li p {
+            margin-bottom: 16px;
+        }
+
+        .ai-answer li p:last-child {
+            margin-bottom: 0;
         }
 
         .ai-answer h1, .ai-answer h2, .ai-answer h3 {
-            margin-top: 20px;
-            margin-bottom: 10px;
+            margin-top: 32px;
+            margin-bottom: 16px;
             color: #1e293b;
         }
 
