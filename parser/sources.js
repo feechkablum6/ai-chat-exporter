@@ -932,4 +932,7 @@
   parser.buildSourceHostname = buildSourceHostname;
   parser.findSourcePreviewImage = findSourcePreviewImage;
   parser.buildSourceCardKey = buildSourceCardKey;
+  parser.collectSourceImageCandidates = collectSourceImageCandidates;
+  parser.pickSourceIconCandidate = pickSourceIconCandidate;
+  parser.pickSourceThumbCandidate = pickSourceThumbCandidate;
 })();
