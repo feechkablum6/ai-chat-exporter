@@ -158,13 +158,6 @@
             color: #35516b;
         }
 
-        .user-quote-mark {
-            color: #7f9db8;
-            font-size: 20px;
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-
         .user-quote-body {
             color: #2f4357;
             font-size: 0.96em;
@@ -253,7 +246,7 @@
         }
 
         .ai-answer > div {
-            margin-bottom: 16px;
+            margin-bottom: 24px;
         }
 
         .ai-answer > div:last-child {
@@ -261,7 +254,7 @@
         }
 
         .ai-answer p {
-            margin-bottom: 16px;
+            margin-bottom: 24px;
         }
 
         .ai-answer strong, .ai-answer b {
