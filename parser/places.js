@@ -19,27 +19,67 @@
   function processPlaceCards(container) {
     if (!container || !container.querySelectorAll) return;
 
-    // Selector for the main card link wrapper
-    // Based on provided HTML: <a class="avIL3e" ... href="/viewer/place?mid=...">
-    // Inside is <div class="nrsimc zrqkEf">
-    var cardLinks = container.querySelectorAll('a.avIL3e[href*="/viewer/place"]');
+    // 1. Find all potential place card links
+    // We look for links that point to Google Maps or Place Viewer
+    var links = container.querySelectorAll('a');
+    var placeLinks = [];
 
-    cardLinks.forEach(function(linkEl) {
-      var cardInner = linkEl.querySelector('.nrsimc');
-      if (!cardInner) return;
+    links.forEach(function(link) {
+      var href = link.getAttribute('href') || '';
+      // Common patterns for place cards in AI chat
+      // href usually looks like /url?q=https://www.google.com/maps/place/...
+      // or /viewer/place/...
+      if (
+        href.includes('/maps/place') ||
+        href.includes('/viewer/place') ||
+        (href.includes('/search?') && href.includes('place_id')) ||
+        (href.includes('google.com/maps'))
+      ) {
+        // Additional check: valid place card usually has an image or significant text
+        if (link.querySelector('img') || link.textContent.length > 10) {
+          placeLinks.push(link);
+        }
+      }
+    });
+
+    placeLinks.forEach(function(linkEl) {
+      // Prevent double processing
+      if (linkEl.hasAttribute('data-ai-place-processed')) return;
 
       var data = extractPlaceData(linkEl);
       if (!data.title) return; // Skip if main data missing
 
-      var newCard = renderPlaceCard(data);
+      // Protect container from cleanup
+      protectContainer(linkEl);
 
-      // The link element usually resides in a wrapper div managed by a controller.
-      // We want to replace the top-most meaningful container of this card to avoid nesting issues.
-      // In the provided HTML: div[jscontroller="L7HJxc"] wraps the <a>.
-      // We can just replace the <a> tag itself, but we should make sure we don't leave empty wrapper garbage.
-      // Replacing the <a> is safe enough.
+      var newCard = renderPlaceCard(data);
+      linkEl.setAttribute('data-ai-place-processed', 'true');
+
+      // Replace the link with our new card
       linkEl.replaceWith(newCard);
     });
+  }
+
+  /**
+   * Removes 'role="navigation"' or similar attributes from parent containers
+   * to prevent them from being removed by parser/clean.js
+   */
+  function protectContainer(element) {
+    var parent = element.parentElement;
+    // Traverse up a few levels to find the list container
+    for (var i = 0; i < 6; i++) {
+      if (!parent) break;
+
+      var role = parent.getAttribute('role');
+      if (role === 'navigation' || role === 'list' || role === 'listitem') {
+        parent.removeAttribute('role');
+      }
+
+      if (parent.hasAttribute('jscontroller')) parent.removeAttribute('jscontroller');
+      if (parent.hasAttribute('jsaction')) parent.removeAttribute('jsaction');
+
+      parent = parent.parentElement;
+    }
   }
 
   function extractPlaceData(linkEl) {
@@ -55,95 +95,98 @@
     };
 
     // 1. Image
-    var imgEl = linkEl.querySelector('img.DRzC0d');
-    if (imgEl) {
-      data.imageSrc = imgEl.getAttribute('src') || imgEl.getAttribute('data-src');
+    // Often lazy loaded with data-src. We want the largest one usually.
+    var imgs = linkEl.querySelectorAll('img');
+    for (var i = 0; i < imgs.length; i++) {
+        var img = imgs[i];
+        var src = img.getAttribute('src') || img.getAttribute('data-src');
+        if (src && !src.includes('data:image/gif;base64') && src.length > 50) {
+            // Likely a real image, not a spacer
+            data.imageSrc = src;
+            break;
+        }
+    }
+    // Fallback if no large src found
+    if (!data.imageSrc && imgs.length > 0) {
+        data.imageSrc = imgs[0].getAttribute('src') || imgs[0].getAttribute('data-src');
     }
 
     // 2. Title
-    var titleEl = linkEl.querySelector('.Vo3rib');
+    // Try to find the largest text or specific headings
+    var titleEl = linkEl.querySelector('[role="heading"], h3, .Vo3rib, .tit');
     if (titleEl) {
       data.title = normalizeText(titleEl.textContent);
+    } else {
+      // Fallback: look for bold text or large text
+      var bold = linkEl.querySelector('b, strong, [style*="font-weight: bold"], [style*="font-weight:700"]');
+      if (bold) {
+          data.title = normalizeText(bold.textContent);
+      }
+    }
+
+    // Fallback 2: First significant text line
+    if (!data.title) {
+        var text = linkEl.innerText || '';
+        var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+        if (lines.length > 0) {
+            data.title = lines[0]; // Assume first line is title
+        }
     }
 
     // 3. Rating & Reviews
-    // Rating: <span aria-label="Rated 4.8 out of 5.0">4.8</span>
-    var ratingEl = linkEl.querySelector('.tZJLob span[aria-label^="Rated"]');
+    // Look for aria-label "Rated X out of 5"
+    var ratingEl = linkEl.querySelector('[aria-label*="Rated"], [aria-label*="Rating"], [aria-label*="stars"]');
     if (ratingEl) {
-      data.rating = normalizeText(ratingEl.textContent);
-    }
-
-    // Reviews: <span role="img" aria-label="656 reviews">(656)</span>
-    var reviewsEl = linkEl.querySelector('.tZJLob span[role="img"]');
-    if (!reviewsEl) {
-       // Fallback: try finding text like "(123)"
-       var spans = linkEl.querySelectorAll('.tZJLob span');
-       for (var i = 0; i < spans.length; i++) {
-         var t = spans[i].textContent.trim();
-         if (t.startsWith('(') && t.endsWith(')')) {
-           reviewsEl = spans[i];
-           break;
-         }
+      var aria = ratingEl.getAttribute('aria-label');
+      var match = aria.match(/([\d\.,]+)/);
+      if (match) data.rating = match[1];
+    } else {
+       // Look for text content like "4.8" followed by stars char or image
+       // Or class .tZJLob
+       var scoreEl = linkEl.querySelector('.YDIN4c, .tZJLob span, span[aria-hidden="true"]');
+       if (scoreEl && /^[\d\.,]+$/.test(scoreEl.textContent.trim())) {
+         data.rating = scoreEl.textContent.trim();
        }
     }
-    if (reviewsEl) {
-      data.reviews = normalizeText(reviewsEl.textContent);
+
+    // Reviews count: usually "(656)"
+    var allText = linkEl.textContent;
+    var reviewsMatch = allText.match(/\(([\d\s,kK\+]+)\)/);
+    if (reviewsMatch) {
+      data.reviews = reviewsMatch[0];
     }
 
-    // 4. Type/Category
-    // It's usually in a .yenbH div, but hard to distinguish from address.
-    // In "Nagornyy Park":
-    // <div class="yenbH"><span>Park</span></div>
-    // <div class="yenbH"><span>Barnaul...</span></div>
-    // The structure is qVQqXe > Fe6VC (title) > bX9Mhc (rating+type row) > yenbH (address)
+    // 4. Type and Metadata
+    // Extract everything else
+    var fullText = linkEl.innerText || '';
+    var lines = fullText.split('\n');
 
-    var contentSide = linkEl.querySelector('.qVQqXe');
-    if (contentSide) {
-      // Find rows
-      var rows = Array.from(contentSide.querySelectorAll('.yenbH'));
+    lines.forEach(function(line) {
+      line = normalizeText(line);
+      if (!line) return;
+      if (line === data.title) return;
+      if (data.rating && line.includes(data.rating)) return;
+      if (data.reviews && line.includes(data.reviews)) return;
+      if (line === '·') return;
 
-      // Filter out rows inside bX9Mhc if that's structural for rating
-      // Actually, looking at HTML:
-      // .bX9Mhc contains:
-      //    .yenbH (rating block)
-      //    .yenbH (Type: "Park")
+      // Filter out obvious noise
+      if (line === 'Open' || line === 'Closed' || line.includes('Opens') || line.includes('Closes')) {
+         // Keep "Open/Closed" as meta?
+         // data.meta.push(line);
+         // Actually in screenshot "Open" is green. Maybe keep it.
+         return;
+      }
 
-      // Let's iterate all .yenbH and try to classify
-      rows.forEach(function(row) {
-        if (row.querySelector('.tZJLob')) return; // This is rating row
-
-        var text = normalizeText(row.textContent);
-        if (!text) return;
-
-        // Heuristic: If it has digits and commas, likely address. If short alpha, likely type.
-        // Or "Open" / "Closed" status
-        if (text === 'Open' || text === 'Closed' || row.querySelector('.rA3FMd') || row.querySelector('.LNNYD')) {
-           data.meta.push(text);
-        } else if (/\d+/.test(text) && text.length > 10) {
-           // Likely address (has zip or street number)
-           data.meta.push(text);
-        } else {
-           // Likely Type (e.g. "Park", "Restaurant")
-           // But could be short address "Main St".
-           // Usually Type comes before address.
-           if (!data.type) data.type = text;
-           else data.meta.push(text);
-        }
-      });
-    }
-
-    // 5. Tags
-    // .tvkKKe contains spans
-    var tagsContainer = linkEl.querySelector('.tvkKKe');
-    if (tagsContainer) {
-      var tagSpans = tagsContainer.querySelectorAll('span');
-      tagSpans.forEach(function(s) {
-        var t = normalizeText(s.textContent);
-        if (t && t !== '·') {
-          data.tags.push(t);
-        }
-      });
-    }
+      // If looks like Type
+      if (!data.type && /^[A-Z][a-z\s]+$/.test(line) && line.length < 30 && !/\d/.test(line)) {
+          data.type = line;
+      } else {
+          // Address or tags
+          if (!data.meta.includes(line)) {
+             data.meta.push(line);
+          }
+      }
+    });
 
     return data;
   }
@@ -167,6 +210,7 @@
       img.className = 'ai-place-image';
       img.src = data.imageSrc;
       img.alt = data.title;
+      img.referrerPolicy = 'no-referrer'; // Avoid 403 on Google images sometimes
       imgWrap.appendChild(img);
       link.appendChild(imgWrap);
     }
@@ -193,11 +237,12 @@
 
       var stars = document.createElement('span');
       stars.className = 'ai-place-stars';
-      // Simple representation of stars based on score
-      var scoreNum = parseFloat(data.rating) || 0;
-      var starStr = '★★★★★'.substring(0, Math.round(scoreNum));
-      var emptyStarStr = '☆☆☆☆☆'.substring(0, 5 - Math.round(scoreNum));
-      stars.textContent = starStr + emptyStarStr;
+      var scoreNum = parseFloat(data.rating.replace(',', '.')) || 0;
+      var starStr = '';
+      for(var i=1; i<=5; i++) {
+        starStr += (scoreNum >= i) ? '★' : '☆';
+      }
+      stars.textContent = starStr;
       ratingRow.appendChild(stars);
 
       if (data.reviews) {
@@ -207,7 +252,6 @@
         ratingRow.appendChild(reviews);
       }
 
-      // Type can sit here or below
       if (data.type) {
          var typeSpan = document.createElement('span');
          typeSpan.className = 'ai-place-type';
@@ -217,27 +261,29 @@
 
       details.appendChild(ratingRow);
     } else if (data.type) {
-       // If no rating, just show type
        var typeRow = document.createElement('div');
        typeRow.className = 'ai-place-meta';
        typeRow.textContent = data.type;
        details.appendChild(typeRow);
     }
 
-    // Meta (Address, Open status)
-    if (data.meta && data.meta.length > 0) {
+    // Meta (Address, etc)
+    // Filter out tags that look like meta
+    var validMeta = data.meta.filter(function(m) {
+      return m !== data.type && !data.tags.includes(m);
+    });
+
+    // Deduplicate
+    validMeta = validMeta.filter(function(item, pos) {
+        return validMeta.indexOf(item) == pos;
+    });
+
+    if (validMeta.length > 0) {
       var metaDiv = document.createElement('div');
       metaDiv.className = 'ai-place-meta';
-      metaDiv.textContent = data.meta.join(' · ');
+      // Join with middot
+      metaDiv.textContent = validMeta.join(' · ');
       details.appendChild(metaDiv);
-    }
-
-    // Tags
-    if (data.tags && data.tags.length > 0) {
-      var tagsDiv = document.createElement('div');
-      tagsDiv.className = 'ai-place-tags';
-      tagsDiv.textContent = data.tags.join(' · ');
-      details.appendChild(tagsDiv);
     }
 
     link.appendChild(details);

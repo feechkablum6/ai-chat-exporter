@@ -1050,11 +1050,6 @@
                 align-self: stretch;
             }
         }
-    </style>`;
-  }
-
-  gen.buildStyles = buildStyles;
-})();
 
         /* Google Maps Places Card Styles */
         .ai-place-card {
@@ -1072,6 +1067,7 @@
             text-decoration: none;
             color: inherit;
             overflow: hidden;
+            align-items: flex-start;
         }
 
         .ai-place-link:hover {
@@ -1079,10 +1075,14 @@
         }
 
         .ai-place-image-wrapper {
-            flex: 0 0 120px;
-            width: 120px;
-            height: 120px;
+            flex: 0 0 84px;
+            width: 84px;
+            height: 84px;
+            margin: 12px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
             overflow: hidden;
+            position: relative;
         }
 
         .ai-place-image {
@@ -1094,18 +1094,20 @@
 
         .ai-place-details {
             flex: 1;
-            padding: 12px 16px;
+            padding: 12px 12px 12px 0;
             display: flex;
             flex-direction: column;
             justify-content: center;
             min-width: 0;
+            gap: 2px;
         }
 
         .ai-place-title {
             font-size: 16px;
             font-weight: 500;
             color: #202124;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            line-height: 1.3;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -1121,7 +1123,8 @@
             align-items: center;
             font-size: 14px;
             color: #70757a;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            line-height: 1.4;
         }
 
         .ai-place-score {
@@ -1148,30 +1151,25 @@
         .ai-place-meta {
             font-size: 14px;
             color: #70757a;
-            margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-
-        .ai-place-tags {
-            font-size: 13px;
-            color: #5f6368;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.4;
         }
 
         @media (max-width: 500px) {
             .ai-place-image-wrapper {
-                flex: 0 0 100px;
-                width: 100px;
-                height: 100px;
-            }
-            .ai-place-details {
-                padding: 10px 12px;
+                flex: 0 0 72px;
+                width: 72px;
+                height: 72px;
             }
             .ai-place-title {
                 font-size: 15px;
             }
         }
+</style>`;
+
+  }
+
+  gen.buildStyles = buildStyles;
+})();
