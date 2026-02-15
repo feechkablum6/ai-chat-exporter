@@ -1055,3 +1055,123 @@
 
   gen.buildStyles = buildStyles;
 })();
+
+        /* Google Maps Places Card Styles */
+        .ai-place-card {
+            margin: 16px 0;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            overflow: hidden;
+            font-family: 'Google Sans', Roboto, sans-serif;
+            background: #fff;
+            max-width: 600px;
+        }
+
+        .ai-place-link {
+            display: flex;
+            text-decoration: none;
+            color: inherit;
+            overflow: hidden;
+        }
+
+        .ai-place-link:hover {
+            background-color: #f8f9fa;
+        }
+
+        .ai-place-image-wrapper {
+            flex: 0 0 120px;
+            width: 120px;
+            height: 120px;
+            overflow: hidden;
+        }
+
+        .ai-place-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .ai-place-details {
+            flex: 1;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .ai-place-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ai-place-link:hover .ai-place-title {
+            text-decoration: underline;
+            color: #1a73e8;
+        }
+
+        .ai-place-rating-row {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #70757a;
+            margin-bottom: 4px;
+        }
+
+        .ai-place-score {
+            color: #202124;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+
+        .ai-place-stars {
+            color: #fbbc04;
+            letter-spacing: -1px;
+            margin-right: 4px;
+        }
+
+        .ai-place-reviews {
+            color: #70757a;
+            margin-right: 4px;
+        }
+
+        .ai-place-type {
+            color: #70757a;
+        }
+
+        .ai-place-meta {
+            font-size: 14px;
+            color: #70757a;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ai-place-tags {
+            font-size: 13px;
+            color: #5f6368;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 500px) {
+            .ai-place-image-wrapper {
+                flex: 0 0 100px;
+                width: 100px;
+                height: 100px;
+            }
+            .ai-place-details {
+                padding: 10px 12px;
+            }
+            .ai-place-title {
+                font-size: 15px;
+            }
+        }

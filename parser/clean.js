@@ -35,6 +35,7 @@
   var removeCommentNodes = parser.removeCommentNodes;
   var stripGoogleAttributes = parser.stripGoogleAttributes;
   var removeEmptyElements = parser.removeEmptyElements;
+  var processPlaceCards = parser.processPlaceCards; // Imported from parser/places.js
 
   /**
    * Извлекает очищенный HTML из элемента.
@@ -47,6 +48,11 @@
     removeUIElements(clone);
     removeAiDisclaimerBlocks(clone);
     removeFeedbackUiBlocks(clone);
+
+    // Обработка карточек мест (Google Maps Places)
+    if (processPlaceCards) {
+      processPlaceCards(clone);
+    }
 
     // Удаляем служебные теги
     clone
