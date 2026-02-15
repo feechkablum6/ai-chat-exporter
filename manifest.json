@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Google AI Chat Saver",
+  "version": "2.1",
+  "description": "Сохраняет переписку из Google AI Mode в чистый HTML файл с нумерацией и навигацией.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Сохранить AI чат"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [{
+    "matches": ["*://www.google.com/*", "*://www.google.ru/*"],
+    "js": [
+      "shared/ns.js",
+
+      "parser/constants.js",
+      "parser/text.js",
+      "parser/dom.js",
+      "parser/images.js",
+      "parser/sources.js",
+      "parser/ui.js",
+      "parser/table.js",
+      "parser/math.js",
+      "parser/code.js",
+      "parser/semantics.js",
+      "parser/clean.js",
+      "parser/core.js",
+      "parser.js"
+    ],
+    "run_at": "document_idle"
+  }]
+}

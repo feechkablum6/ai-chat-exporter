@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+*.zip
+
+# Development files
+scripts/
+chrome-devtools-mcp.md
+mcp.chrome-devtools.json
+AGENTS.md
+
+# Client assets (demo/test files)
+client-assets/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
