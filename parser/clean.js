@@ -35,6 +35,8 @@
   var removeCommentNodes = parser.removeCommentNodes;
   var stripGoogleAttributes = parser.stripGoogleAttributes;
   var removeEmptyElements = parser.removeEmptyElements;
+  // NOTE: parser/places.js must be loaded before parser/clean.js
+  var processPlaceCards = parser.processPlaceCards;
 
   /**
    * Извлекает очищенный HTML из элемента.
@@ -42,6 +44,18 @@
   function extractCleanHTML(container, externalSourcePanelBlockEl) {
     var clone = container.cloneNode(true);
     var sourcePanelBlockEl = externalSourcePanelBlockEl || buildSourcePanelBlock(clone);
+
+    // Обработка карточек мест (Google Maps Places)
+    // ВАЖНО: Делаем это ДО удаления UI-элементов, чтобы не потерять контейнеры.
+    if (processPlaceCards) {
+      processPlaceCards(clone);
+    }
+
+    // Если processPlaceCards не определена в переменной, попробуем взять из глобального объекта
+    // (на случай если clean.js загрузился раньше places.js, хотя порядок загрузки в popup.js правильный)
+    if (!processPlaceCards && parser.processPlaceCards) {
+       parser.processPlaceCards(clone);
+    }
 
     // Удаляем UI-элементы
     removeUIElements(clone);
